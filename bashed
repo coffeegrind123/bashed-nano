@@ -1281,10 +1281,16 @@ event_init() {
 file_init() {
 	file_path="${1}"
 
-	if [ -e "${file_path}" ]; then
+	if [ -n "${file_path}" ] && [ -e "${file_path}" ]; then
+		# File exists, read it
 		readarray -t lines <<< "$(<"${file_path}")"
-		draw_message "Opened file \"${file_path}\"".
+		draw_message "Opened file \"${file_path}\"."
+	elif [ -n "${file_path}" ]; then
+		# File doesn't exist but path is specified, create empty buffer
+		lines=('')
+		draw_message "New file \"${file_path}\"."
 	else
+		# No file path specified, create empty buffer
 		lines=('')
 	fi
 
@@ -1297,13 +1303,28 @@ file_init() {
 
 # Save the current buffer.
 file_save() {
-	[ -z "${file_path}" ] && file_ask_filename 'save'
+	# If no file path is set, ask for a filename
+	if [ -z "${file_path}" ]; then
+		file_ask_filename 'save'
+	fi
 
-	printf '%s\n' "${lines[@]}" > "${file_path}"
+	# Create the directory if it doesn't exist
+	local dir_path="$(dirname "${file_path}")"
+	if [ ! -d "${dir_path}" ]; then
+		if ! mkdir -p "${dir_path}" 2>/dev/null; then
+			draw_message "Error: Could not create directory \"${dir_path}\"."
+			return 1
+		fi
+	fi
 
-	draw_message "Saved file \"${file_path}\"."
-
-	file_modified=0
+	# Save the file
+	if printf '%s\n' "${lines[@]}" > "${file_path}" 2>/dev/null; then
+		draw_message "Saved file \"${file_path}\"."
+		file_modified=0
+	else
+		draw_message "Error: Could not save file \"${file_path}\"."
+		return 1
+	fi
 }
 
 # Create a new buffer.
