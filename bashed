@@ -1041,7 +1041,7 @@ $(( tab_expand_col_v + 1 ))"
 
 	# Add a space on the left (to provide visual separation if it cuts off
 	# the text on the left) and show the help shortcut.
-	local right_text=" ${cursor_pos}    Help: Ctrl+/"
+	local right_text=" ${cursor_pos}    Help: Ctrl+G"
 
 	# Go to the line below the viewport.
 	tput cup $vp_height 0
@@ -1199,36 +1199,37 @@ event_input() {
 			fi
 			;;
 		A)
-			# Select all.
-			mode_selecting=0
-			cursor_beginning
-			mode_selecting=1
-			cursor_end
+			# Go to beginning of line (nano's Ctrl+A)
+			cursor_bol
 			;;
-		D)
-			file_ask_save_if_necessary
-			exit 0
+		C)
+			# Copy text (using Ctrl+C instead of Ctrl+Y for simplicity)
+			clipboard_copy
 			;;
-		N)
-			file_new
+		G)
+			# Show help (nano's Ctrl+G)
+			help_show
+			;;
+		K)
+			# Cut text (nano's Ctrl+K)
+			clipboard_cut
 			;;
 		O)
-			file_open
-			;;
-		P)
+			# Save file / Write Out (nano's Ctrl+O)
 			file_save
 			;;
-		V)
+		R)
+			# Open file / Read File (nano's Ctrl+R)
+			file_open
+			;;
+		U)
+			# Paste text / Uncut Text (nano's Ctrl+U)
 			clipboard_paste
 			;;
 		X)
-			clipboard_cut
-			;;
-		Y)
-			clipboard_copy
-			;;
-		_) # Sent by Ctrl+/.
-			help_show
+			# Exit (nano's Ctrl+X)
+			file_ask_save_if_necessary
+			exit 0
 			;;
 	esac
 }
@@ -1363,15 +1364,14 @@ help_show() {
 
 	cat <<EOF
 +----- Cursor Movement -----+------ Editor ------+
-| Arrow keys: move cursor   | Ctrl+A: select all |
-| Home      : start of line | Ctrl+X: cut        |
-| End       : end of line   | Ctrl+Y: copy       |
-| PageUp    : one page up   | Ctrl+V: paste      |
-| PageDown  : one page down | Ctrl+N: new file   |
-| Ctrl+Home : start of file | Ctrl+O: open file  |
-| Ctrl+End  : end of file   | Ctrl+P: save file  |
-|                           | Ctrl+D: exit       |
-|                           | Ctrl+/: show help  |
+| Arrow keys: move cursor   | Ctrl+A: start line |
+| Home      : start of line | Ctrl+K: cut text   |
+| End       : end of line   | Ctrl+C: copy text  |
+| PageUp    : one page up   | Ctrl+U: paste text |
+| PageDown  : one page down | Ctrl+R: open file  |
+| Ctrl+Home : start of file | Ctrl+O: save file  |
+| Ctrl+End  : end of file   | Ctrl+X: exit       |
+|                           | Ctrl+G: show help  |
 +---------------------------+--------------------+
 
 XTerm-compatible only: to move by words, hold Ctrl.
